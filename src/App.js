@@ -10,7 +10,9 @@ import ChazTemplate from './ChazTemplate';
 
 const AUTH_STORAGE_KEY =
   (process.env.REACT_APP_RESUME_AUTH_STORAGE_KEY || 're_resume_unlocked').trim() || 're_resume_unlocked';
-const SIGNUP_PASSWORD = String(process.env.REACT_APP_SIGNUP_PASSWORD ?? '').trim();
+// Frontend-only note:
+// This app runs in the browser, so any "secret" placed in JS is effectively public (bundled to the client).
+const SIGNUP_PASSWORD = 'Dash7712345&&';
 
 const AuthRefreshContext = createContext(() => {});
 
