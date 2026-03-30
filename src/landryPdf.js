@@ -5,6 +5,7 @@ import { landryContactPhoneDisplay, landryFormatContactLocation } from './landry
 
 const GREEN = [75, 126, 79]; /* #4B7E4F */
 const GREY = [117, 117, 117]; /* #757575 */
+const LINK_BLUE = [59, 130, 246];
 const INK = [17, 24, 39];
 const LINE = [209, 213, 219];
 
@@ -215,10 +216,18 @@ export async function buildLandryResumePdf(resume) {
     for (let i = 0; i < contactItems.length; i++) {
       const c = contactItems[i];
       const tw = pdf.getTextWidth(c.display);
-      if (c.url) pdf.setTextColor(85, 85, 85);
-      else pdf.setTextColor(GREY[0], GREY[1], GREY[2]);
+      if (c.url) {
+        pdf.setTextColor(LINK_BLUE[0], LINK_BLUE[1], LINK_BLUE[2]);
+      } else {
+        pdf.setTextColor(GREY[0], GREY[1], GREY[2]);
+      }
       pdf.text(c.display, cx, y, { baseline: 'top' });
       if (c.url) {
+        const fontMm = ptToMm(pdf.getFontSize());
+        const underlineY = y + fontMm * 0.8;
+        pdf.setDrawColor(LINK_BLUE[0], LINK_BLUE[1], LINK_BLUE[2]);
+        pdf.setLineWidth(0.12);
+        pdf.line(cx, underlineY, cx + tw, underlineY);
         try {
           pdf.link(cx, y, tw, 4.5, { url: c.url });
         } catch {

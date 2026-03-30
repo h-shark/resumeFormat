@@ -316,12 +316,12 @@
 }
 
 .karon-page .karon-preview-contact__link {
-  color: #3b82f6;
-  text-decoration: none;
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 .karon-page .karon-preview-contact__link:hover {
-  text-decoration: underline;
+  color: #1d4ed8;
 }
 
 .karon-page .karon-preview-contact__sep {

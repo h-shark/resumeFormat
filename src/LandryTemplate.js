@@ -109,8 +109,7 @@ function countPdfImportFields(parsed) {
   return n;
 }
 
-function bulletsFromDetails(details) {
-  return String(details || '')
+function bulletsFromDetails(details) {  return String(details || '')
     .split(/\n+/)
     .map((line) => line.replace(/^\s*[•\-*]\s*/, '').trim())
     .filter(Boolean);

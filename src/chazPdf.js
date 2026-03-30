@@ -50,6 +50,7 @@ const CHAZ_GREEN = [34, 168, 108];
 const CHAZ_GREEN_HI = [46, 204, 113];
 const CHAZ_INK = [26, 26, 26];
 const CHAZ_MUTED = [92, 92, 92];
+const CHAZ_LINK_BLUE = [59, 130, 246];
 const CHAZ_LINE = [232, 232, 232];
 
 /** Shrink wrap width so splitTextToSize lines do not bleed into the aside (metric/render mismatch). */
@@ -171,9 +172,18 @@ export async function buildChazResumePdf(resume) {
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
       const w = pdf.getTextWidth(it.t);
-      pdf.setTextColor(CHAZ_MUTED[0], CHAZ_MUTED[1], CHAZ_MUTED[2]);
+      if (it.url) {
+        pdf.setTextColor(CHAZ_LINK_BLUE[0], CHAZ_LINK_BLUE[1], CHAZ_LINK_BLUE[2]);
+      } else {
+        pdf.setTextColor(CHAZ_MUTED[0], CHAZ_MUTED[1], CHAZ_MUTED[2]);
+      }
       pdf.text(it.t, cx, contactY, { baseline: 'top' });
       if (it.url) {
+        const fontMm = ptToMm(pdf.getFontSize());
+        const underlineY = contactY + fontMm * 0.8;
+        pdf.setDrawColor(CHAZ_LINK_BLUE[0], CHAZ_LINK_BLUE[1], CHAZ_LINK_BLUE[2]);
+        pdf.setLineWidth(0.12);
+        pdf.line(cx, underlineY, cx + w, underlineY);
         try {
           pdf.link(cx, contactY, w, 4, { url: it.url });
         } catch {
@@ -182,6 +192,7 @@ export async function buildChazResumePdf(resume) {
       }
       cx += w;
       if (i < items.length - 1) {
+        pdf.setTextColor(CHAZ_MUTED[0], CHAZ_MUTED[1], CHAZ_MUTED[2]);
         pdf.text(sep, cx, contactY, { baseline: 'top' });
         cx += pdf.getTextWidth(sep);
       }

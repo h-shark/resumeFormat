@@ -649,8 +649,8 @@ export default function ChazTemplate({ brandName = 'Chaz', middlewarePath = '/ch
                           </div>
                           {row.details?.trim() ? (
                             <ul className="chaz-exp__bullets">
-                              {bulletsFromDetails(row.details).map((b) => (
-                                <li key={b}>{b}</li>
+                              {bulletsFromDetails(row.details).map((b, index) => (
+                                <li key={`${row.id}-bullet-${index}`}>{b}</li>
                               ))}
                             </ul>
                           ) : null}

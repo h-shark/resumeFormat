@@ -18,21 +18,18 @@ function TemplateMiddleware({ badge, basePath }) {
   const root = basePath.replace(/\/$/, '') || basePath;
   const editorPath = `${root}/editor`;
 
-  const goEditor = useCallback(() => {
-    navigate(editorPath, {
-      state: file ? { uploadedFile: file, uploadedFileName: file.name } : undefined,
-    });
-  }, [navigate, editorPath, file]);
-
-  const skipUpload = useCallback(() => {
-    setFile(null);
-    navigate(editorPath);
-  }, [navigate, editorPath]);
-
-  const pickFiles = useCallback((files) => {
-    const next = files && files[0];
-    if (next) setFile(next);
-  }, []);
+  const pickFiles = useCallback(
+    (files) => {
+      const next = files && files[0];
+      if (next) {
+        setFile(next);
+        navigate(editorPath, {
+          state: { uploadedFile: next, uploadedFileName: next.name },
+        });
+      }
+    },
+    [navigate, editorPath],
+  );
 
   const onInputChange = useCallback(
     (e) => {
@@ -79,7 +76,7 @@ function TemplateMiddleware({ badge, basePath }) {
         >
           Enhancv&apos;s template landing
         </a>
-        . You can also skip upload and start from scratch.
+        .
       </p>
 
       <div className="karon-mw__card">
@@ -120,16 +117,6 @@ function TemplateMiddleware({ badge, basePath }) {
           {file ? <p className="karon-mw__file-name">Selected: {file.name}</p> : null}
         </div>
 
-        <div className="karon-mw__actions">
-          <button type="button" className="karon-mw__continue" onClick={goEditor}>
-            {file ? 'Continue with this file' : 'Continue to editor'}
-          </button>
-          <div>
-            <button type="button" className="karon-mw__btn-secondary" onClick={skipUpload}>
-              Skip upload — start from scratch
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

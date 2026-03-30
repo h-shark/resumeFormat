@@ -71,6 +71,16 @@
   text-decoration: none;
 }
 
+.landry-contact-bar__item[href] {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.landry-contact-bar__item[href]:hover {
+  color: #1d4ed8;
+}
+
+
 .landry-contact-bar__item:hover {
   color: var(--landry-green);
 }

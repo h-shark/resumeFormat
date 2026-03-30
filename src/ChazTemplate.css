@@ -70,6 +70,16 @@
   text-decoration: none;
 }
 
+.chaz-contact__item[href] {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.chaz-contact__item[href]:hover {
+  color: #1d4ed8;
+}
+
+
 .chaz-contact__item:hover {
   color: var(--chaz-green);
 }
