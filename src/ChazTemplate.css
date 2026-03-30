@@ -1,0 +1,272 @@
+/*
+ * Chaz — Enhancv-inspired two-column resume (green section titles, main + key achievements sidebar).
+ * Reference: predefined-g3RnTLVSXswzXXBW4soUhwi4Q8aE5id6daK5OL8q
+ */
+
+:root {
+  --chaz-green: #22a86c;
+  --chaz-green-border: #2ecc71;
+  --chaz-ink: #1a1a1a;
+  --chaz-muted: #5c5c5c;
+  --chaz-line: #e8e8e8;
+}
+
+.chaz-page {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #fff;
+  color: var(--chaz-ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+  padding: 2.25rem 2.25rem 2rem;
+  box-shadow: 0 4px 40px rgba(15, 23, 42, 0.08);
+}
+
+.chaz-page *,
+.chaz-page *::before,
+.chaz-page *::after {
+  box-sizing: border-box;
+}
+
+.chaz-page__header {
+  text-align: center;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--chaz-line);
+  margin-bottom: 1.35rem;
+}
+
+.chaz-page__name {
+  margin: 0;
+  font-size: clamp(1.45rem, 3.8vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--chaz-green);
+}
+
+.chaz-page__tagline {
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--chaz-muted);
+}
+
+.chaz-contact {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.75rem;
+  margin-top: 0.95rem;
+}
+
+.chaz-contact__item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.76rem;
+  color: var(--chaz-muted);
+  text-decoration: none;
+}
+
+.chaz-contact__item:hover {
+  color: var(--chaz-green);
+}
+
+.chaz-page__grid {
+  display: grid;
+  /* ~62% main / ~38% aside — matches chazPdf.js so preview and PDF share the same gutter */
+  grid-template-columns: minmax(0, 1.62fr) minmax(9rem, 1fr);
+  gap: 1.5rem 1.75rem;
+  align-items: start;
+}
+
+.chaz-main {
+  min-width: 0;
+}
+
+.chaz-aside {
+  min-width: 0;
+}
+
+.chaz-aside .chaz-edu__degree {
+  font-size: 0.82rem;
+}
+
+.chaz-aside .chaz-edu__school,
+.chaz-aside .chaz-edu__meta {
+  font-size: 0.72rem;
+}
+
+.chaz-sec-title {
+  margin: 0 0 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chaz-green);
+}
+
+.chaz-sec {
+  margin-bottom: 1.35rem;
+}
+
+.chaz-sec:last-child {
+  margin-bottom: 0;
+}
+
+.chaz-summary-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.58;
+  color: var(--chaz-muted);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.chaz-exp {
+  margin-bottom: 1.15rem;
+}
+
+.chaz-exp:last-child {
+  margin-bottom: 0;
+}
+
+.chaz-exp--highlight {
+  border: 1px solid var(--chaz-green-border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-left: -0.15rem;
+  margin-right: -0.15rem;
+  background: rgba(46, 204, 113, 0.04);
+}
+
+.chaz-exp__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--chaz-ink);
+}
+
+.chaz-exp__meta {
+  margin: 0 0 0.55rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--chaz-muted);
+}
+
+.chaz-exp__bullets {
+  margin: 0;
+  padding-left: 1.05rem;
+  font-size: 0.77rem;
+  line-height: 1.52;
+  color: var(--chaz-muted);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.chaz-exp__bullets li {
+  margin-bottom: 0.25rem;
+}
+
+.chaz-exp__bullets li:last-child {
+  margin-bottom: 0;
+}
+
+.chaz-edu {
+  margin-bottom: 1rem;
+}
+
+.chaz-edu:last-child {
+  margin-bottom: 0;
+}
+
+.chaz-edu__degree {
+  margin: 0 0 0.28rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--chaz-ink);
+}
+
+.chaz-edu__school {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: var(--chaz-muted);
+}
+
+.chaz-edu__meta {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--chaz-muted);
+  line-height: 1.4;
+}
+
+.chaz-ach {
+  margin-bottom: 1.45rem;
+}
+
+.chaz-ach:last-child {
+  margin-bottom: 0;
+}
+
+.chaz-ach__title {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--chaz-ink);
+}
+
+.chaz-ach__desc {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--chaz-muted);
+}
+
+.chaz-skills {
+  margin: 0;
+  padding-left: 1.05rem;
+  font-size: 0.76rem;
+  line-height: 1.52;
+  color: var(--chaz-muted);
+}
+
+.chaz-skills li {
+  margin-bottom: 0.35rem;
+}
+
+.chaz-skills li:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .chaz-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chaz-aside {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--chaz-line);
+  }
+}
+
+@media print {
+  .karon-editor .karon-toolbar,
+  .karon-editor .karon-sidebar {
+    display: none !important;
+  }
+  .karon-editor .karon-layout {
+    display: block !important;
+  }
+  .karon-editor .karon-preview-wrap {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .chaz-page {
+    box-shadow: none;
+    padding: 0.5cm;
+  }
+}

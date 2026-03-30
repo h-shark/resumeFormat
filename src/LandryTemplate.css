@@ -1,0 +1,364 @@
+/*
+ * Landry — Enhancv-inspired timeline resume (forest green + grey accents).
+ * Reference: https://app.enhancv.com/resume/new?example=predefined-NnGWboOQRTS1dwTKQMxdcmitQ1h3HTGrypBCQrxF
+ */
+
+:root {
+  --landry-green: #4b7e4f;
+  --landry-grey: #757575;
+  --landry-ink: #111827;
+  --landry-line: #d1d5db;
+}
+
+.landry-page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 4px 40px rgba(15, 23, 42, 0.1);
+  color: var(--landry-ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+  padding: 4rem 5rem 2rem 5rem;
+}
+
+.landry-page *,
+.landry-page *::before,
+.landry-page *::after {
+  box-sizing: border-box;
+}
+
+/* —— Header —— */
+.landry-page__header {
+  text-align: center;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 1rem;
+}
+
+.landry-page__name {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--landry-ink);
+}
+
+.landry-page__headline {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--landry-green);
+}
+
+.landry-contact-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.1rem 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.landry-contact-bar__item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--landry-grey);
+  text-decoration: none;
+}
+
+.landry-contact-bar__item:hover {
+  color: var(--landry-green);
+}
+
+/* —— Sections (single column) —— */
+.landry-sec {
+  margin-bottom: 1.25rem;
+}
+
+.landry-sec:last-child {
+  margin-bottom: 0;
+}
+
+.landry-sec-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--landry-ink);
+}
+
+.landry-sec--skills .landry-sec-title {
+  margin-bottom: 0.4rem;
+}
+
+.landry-sec-rule {
+  border: none;
+  border-top: 1px solid var(--landry-line);
+  margin: 0 0 0.65rem;
+}
+
+.landry-summary-text {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--landry-ink);
+}
+
+/* —— Timeline (education, experience, volunteer) —— */
+.landry-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.landry-tl-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-bottom: 1.05rem;
+}
+
+.landry-tl-row:last-child {
+  margin-bottom: 0;
+}
+
+.landry-tl-left {
+  flex: 0 0 24%;
+  max-width: 120px;
+  text-align: right;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--landry-grey);
+  padding-top: 2px;
+}
+
+.landry-tl-dates {
+  font-weight: 500;
+}
+
+.landry-tl-loc {
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+}
+
+.landry-tl-track {
+  flex: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100%;
+}
+
+.landry-tl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--landry-ink);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.landry-tl-line {
+  flex: 1;
+  width: 1px;
+  min-height: 0.5rem;
+  background: var(--landry-line);
+  margin-top: 3px;
+}
+
+.landry-tl-body {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 0.15rem;
+}
+
+.landry-tl-role {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--landry-ink);
+}
+
+.landry-tl-role--caps {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.72rem;
+}
+
+.landry-tl-org {
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--landry-green);
+}
+
+.landry-tl-bullets {
+  margin: 0.4rem 0 0;
+  padding: 0 0 0 0.85rem;
+  list-style: none;
+}
+
+.landry-tl-bullets li {
+  position: relative;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--landry-ink);
+  margin-bottom: 0.22rem;
+  padding-left: 0.45rem;
+}
+
+.landry-tl-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 3px;
+  height: 3px;
+  background: var(--landry-ink);
+  border-radius: 1px;
+}
+
+/* Embedded job inside details */
+.landry-tl-body .landry-exp__embedded {
+  margin-top: 0.55rem;
+}
+
+.landry-tl-body .landry-exp__embedded:first-child {
+  margin-top: 0.25rem;
+}
+
+.landry-tl-body .landry-exp__embedded .landry-exp__head {
+  margin-top: 0;
+}
+
+.landry-exp__embedded-fallback {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--landry-ink);
+  margin-top: 0.45rem;
+}
+
+/* —— Skills (category | rail | comma-separated values) —— */
+.landry-skills-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--landry-ink);
+}
+
+.landry-skills-row {
+  display: grid;
+  grid-template-columns: minmax(0, 34%) 1px minmax(0, 1fr);
+  column-gap: 0.65rem;
+  align-items: start;
+}
+
+.landry-skills-cat {
+  font-weight: 700;
+  color: var(--landry-ink);
+  text-align: left;
+  word-break: break-word;
+}
+
+.landry-skills-divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 0.85rem;
+  background: var(--landry-line);
+}
+
+.landry-skills-values {
+  font-weight: 400;
+  color: var(--landry-ink);
+  word-break: break-word;
+}
+
+.landry-skills-row--plain {
+  grid-template-columns: 1fr;
+}
+
+.landry-skills-row--plain .landry-skills-cat,
+.landry-skills-row--plain .landry-skills-divider {
+  display: none;
+}
+
+/* —— References —— */
+.landry-refs-block {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--landry-ink);
+  white-space: pre-wrap;
+}
+
+/* —— Legacy class hooks used by LandryDetailBody / embedded jobs —— */
+.landry-exp__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.landry-exp__title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--landry-ink);
+}
+
+.landry-exp__meta {
+  font-size: 0.68rem;
+  color: var(--landry-grey);
+  white-space: nowrap;
+}
+
+.landry-exp__company {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--landry-green);
+  margin-top: 0.15rem;
+}
+
+.landry-bullets {
+  margin: 0.35rem 0 0;
+  padding: 0 0 0 0.85rem;
+  list-style: none;
+}
+
+.landry-bullets li {
+  position: relative;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--landry-ink);
+  margin-bottom: 0.22rem;
+  padding-left: 0.45rem;
+}
+
+.landry-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 3px;
+  height: 3px;
+  background: var(--landry-ink);
+  border-radius: 1px;
+}
+
+@media print {
+  .landry-page {
+    box-shadow: none;
+  }
+}
