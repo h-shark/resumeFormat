@@ -208,6 +208,30 @@
   color: var(--landry-green);
 }
 
+.landry-cert-list {
+  margin: 0;
+}
+
+.landry-cert-line {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  column-gap: 0.28rem;
+  align-items: start;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--landry-ink);
+  margin: 0 0 0.18rem;
+}
+
+.landry-cert-line:last-child {
+  margin-bottom: 0;
+}
+
+.landry-cert-name {
+  font-weight: 700;
+  color: var(--landry-ink);
+}
+
 .landry-tl-bullets {
   margin: 0.4rem 0 0;
   padding: 0 0 0 0.85rem;
@@ -300,6 +324,64 @@
 .landry-skills-row--plain .landry-skills-cat,
 .landry-skills-row--plain .landry-skills-divider {
   display: none;
+}
+
+.landry-skill-matrix {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.landry-skill-matrix--two-cols {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 1rem;
+  align-items: start;
+}
+
+.landry-skill-matrix__col {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.landry-skill-matrix__group {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.landry-skill-matrix__category {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--landry-green);
+}
+
+.landry-skill-matrix__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.65rem;
+}
+
+.landry-skill-matrix__name {
+  font-size: 0.72rem;
+  color: var(--landry-ink);
+}
+
+.landry-skill-matrix__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.landry-skill-matrix__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #d1d5db;
+}
+
+.landry-skill-matrix__dot--on {
+  background: var(--landry-green);
 }
 
 /* —— References —— */

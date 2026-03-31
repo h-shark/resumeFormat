@@ -85,11 +85,23 @@
 }
 
 .chaz-page__grid {
+  position: relative;
   display: grid;
   /* ~62% main / ~38% aside — matches chazPdf.js so preview and PDF share the same gutter */
   grid-template-columns: minmax(0, 1.62fr) minmax(9rem, 1fr);
   gap: 1.5rem 1.75rem;
   align-items: start;
+}
+
+.chaz-page__grid::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(61.8% + 0.875rem);
+  width: 1px;
+  background: var(--chaz-line);
+  pointer-events: none;
 }
 
 .chaz-main {
@@ -98,6 +110,7 @@
 
 .chaz-aside {
   min-width: 0;
+  padding-left: 0.35rem;
 }
 
 .chaz-aside .chaz-edu__degree {
@@ -236,14 +249,35 @@
 
 .chaz-skills {
   margin: 0;
-  padding-left: 1.05rem;
-  font-size: 0.76rem;
-  line-height: 1.52;
-  color: var(--chaz-muted);
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.42rem;
 }
 
 .chaz-skills li {
-  margin-bottom: 0.35rem;
+  margin: 0;
+  padding: 0.34rem 0.56rem;
+  border: 1px solid #dff3e8;
+  border-radius: 999px;
+  background: #f6fcf8;
+  font-size: 0.73rem;
+  line-height: 1.4;
+  color: #3f4a44;
+  position: relative;
+  padding-left: 1.05rem;
+}
+
+.chaz-skills li::before {
+  content: '';
+  position: absolute;
+  left: 0.52rem;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: var(--chaz-green);
 }
 
 .chaz-skills li:last-child {
@@ -255,8 +289,13 @@
     grid-template-columns: 1fr;
   }
 
+  .chaz-page__grid::after {
+    display: none;
+  }
+
   .chaz-aside {
     padding-top: 0.5rem;
+    padding-left: 0;
     border-top: 1px solid var(--chaz-line);
   }
 }

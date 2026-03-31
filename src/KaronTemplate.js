@@ -133,6 +133,28 @@ function SkillsSectionIcon({ className }) {
 }
 
 const SECTION_TITLE_TEAL = /^(summary|experience|projects|education|certifications|skills)$/i;
+const KARON_FIXED_CERTIFICATES = [
+  {
+    url: 'https://www.hackerrank.com/certificates/d93c62b02d33',
+    title: 'Go (Intermediate) Verified',
+  },
+  {
+    url: 'https://www.hackerrank.com/certificates/77091f342093',
+    title: 'Python (Basic) Verified',
+  },
+  {
+    url: 'https://www.hackerrank.com/certificates/957ce430108e',
+    title: 'React Verified',
+  },
+  {
+    url: 'https://www.hackerrank.com/certificates/ecaa0ad6f025',
+    title: 'Rest API Verified',
+  },
+  {
+    url: 'https://www.hackerrank.com/certificates/68d66214149e',
+    title: 'SQL (Advanced) Verified',
+  },
+];
 
 const PDF_TEXT_TIMEOUT_MS = 120_000;
 
@@ -449,6 +471,77 @@ function buildEditableResumePdf(resume, backgroundDataUrl) {
     });
   }
 
+  const hasEdu = resume.education?.some((e) => e.school || e.degree);
+  if (hasEdu) {
+    sectionRule('Education');
+    let eduRows = 0;
+    for (const row of resume.education) {
+      if (!row.school && !row.degree) continue;
+      eduRows += 1;
+      const title = [row.school, row.degree].filter(Boolean).join(' — ') || 'Education';
+      const period = row.period || '';
+      const titleMaxW = period ? maxW - 38 : maxW;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(17, 24, 39);
+      const eduLines = pdf.splitTextToSize(pdfSafeText(title), titleMaxW);
+      const lh = ptToMm(10) * 1.45;
+      for (let i = 0; i < eduLines.length; i++) {
+        ensureSpace(lh);
+        pdf.text(eduLines[i], marginX, y, { baseline: 'top' });
+        if (i === 0 && period) {
+          const periodSafe = pdfSafeText(period);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          pdf.setTextColor(107, 114, 128);
+          const pw = pdf.getTextWidth(periodSafe);
+          pdf.text(periodSafe, pageW - marginX - pw, y, { baseline: 'top' });
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(10);
+          pdf.setTextColor(17, 24, 39);
+        }
+        y += lh;
+      }
+      y += itemGap;
+    }
+    if (eduRows > 0) {
+      y -= itemGap;
+      y += blockGap;
+    }
+  }
+
+  if (KARON_FIXED_CERTIFICATES.length) {
+    sectionRule('Certifications');
+    const certFs = 9.5;
+    const certLh = ptToMm(certFs) * 1.45;
+    const certLabelColW = 44;
+    const certUrlX = marginX + certLabelColW;
+    const certUrlW = Math.max(12, maxW - certLabelColW);
+    for (const cert of KARON_FIXED_CERTIFICATES) {
+      const title = pdfSafeText(cert.title);
+      const url = pdfSafeText(cert.url);
+      const absUrl = pdfAbsLinkUrl(cert.url);
+      const label = `${title}:`;
+      ensureSpace(certLh);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(certFs);
+      pdf.setTextColor(55, 65, 81);
+      pdf.text(label, marginX, y, { baseline: 'top' });
+      const firstLine = (pdf.splitTextToSize(url, certUrlW) || [url])[0];
+      pdf.setTextColor(59, 130, 246);
+      pdf.text(firstLine, certUrlX, y, { baseline: 'top' });
+      const firstLineW = pdf.getTextWidth(firstLine);
+      try {
+        pdf.link(certUrlX, y, firstLineW, certLh, { url: absUrl });
+      } catch {
+        /* ignore invalid links */
+      }
+      y += certLh;
+    }
+    y += blockGap;
+  }
+
   const hasExp = resume.experience?.some((e) => e.title || e.company || e.details);
   if (hasExp) {
     sectionRule('Experience');
@@ -553,46 +646,6 @@ function buildEditableResumePdf(resume, backgroundDataUrl) {
     }
   }
 
-  const hasEdu = resume.education?.some((e) => e.school || e.degree);
-  if (hasEdu) {
-    sectionRule('Education');
-    let eduRows = 0;
-    for (const row of resume.education) {
-      if (!row.school && !row.degree) continue;
-      eduRows += 1;
-      const title = [row.school, row.degree].filter(Boolean).join(' — ') || 'Education';
-      const period = row.period || '';
-      const titleMaxW = period ? maxW - 38 : maxW;
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.setTextColor(17, 24, 39);
-      const eduLines = pdf.splitTextToSize(pdfSafeText(title), titleMaxW);
-      const lh = ptToMm(10) * 1.45;
-      for (let i = 0; i < eduLines.length; i++) {
-        ensureSpace(lh);
-        pdf.text(eduLines[i], marginX, y, { baseline: 'top' });
-        if (i === 0 && period) {
-          const periodSafe = pdfSafeText(period);
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(9);
-          pdf.setTextColor(107, 114, 128);
-          const pw = pdf.getTextWidth(periodSafe);
-          pdf.text(periodSafe, pageW - marginX - pw, y, { baseline: 'top' });
-          pdf.setFont('helvetica', 'bold');
-          pdf.setFontSize(10);
-          pdf.setTextColor(17, 24, 39);
-        }
-        y += lh;
-      }
-      y += itemGap;
-    }
-    if (eduRows > 0) {
-      y -= itemGap;
-      y += blockGap;
-    }
-  }
-
   if (resume.certifications?.trim()) {
     sectionRule('Certifications');
     writeWrapped(resume.certifications, 9.5, {
@@ -615,10 +668,8 @@ function buildEditableResumePdf(resume, backgroundDataUrl) {
     String(resume.fullName || 'resume')
       .replace(/[^\w\s-]/g, '')
       .trim()
-      .replace(/\s+/g, ' ') || 'resume';
-  const d = new Date();
-  const ts = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`;
-  pdf.save(`${fileStem}-${ts}.pdf`);
+      .replace(/\s+/g, '_') || 'resume';
+  pdf.save(`${fileStem}.pdf`);
 }
 
 const defaultResume = {
@@ -680,7 +731,6 @@ const emptyResume = {
   experience: [],
   projects: [],
   education: [],
-  certifications: '',
   skills: '',
 };
 
@@ -714,7 +764,10 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
   const [pdfRawText, setPdfRawText] = useState(() => (isPdfUpload ? undefined : null));
   const [pdfBusy, setPdfBusy] = useState(false);
   const [importStatus, setImportStatus] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const previewRef = useRef(null);
+  const inputRef = useRef(null);
   const pdfLockRef = useRef(false);
   const pdfImportDoneRef = useRef(false);
 
@@ -755,7 +808,6 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
           linkedIn,
           github,
           summary: parsed.summary || '',
-          certifications: parsed.certifications || '',
           skills: parsed.skills || '',
           experience: (parsed.experience || []).map((row) => ({
             id: newId(),
@@ -875,6 +927,131 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
     }));
   }, []);
 
+
+
+  const ACCEPT =
+    '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  const pickFiles = useCallback(
+    (files) => {
+      const next = files && files[0];
+      if (next) {
+        setShowUploadModal(false);
+        setDragOver(false);
+        // Process the file
+        const isPdf = next.type === 'application/pdf' || next.name?.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          pdfImportDoneRef.current = false;
+          setImportStatus('Reading PDF…');
+          (async () => {
+            try {
+              const buf = await next.arrayBuffer();
+              const extracted = await extractTextAndLinksFromPdfWithTimeout(buf);
+              const text = extracted?.text ?? '';
+              setPdfRawText(text);
+              const parsed = parseResumeFromPdfText(text);
+              const linkedIn =
+                (extracted?.linkedInFromAnnotations && String(extracted.linkedInFromAnnotations).trim()) ||
+                parsed.linkedIn ||
+                '';
+              const github =
+                (extracted?.githubFromAnnotations && String(extracted.githubFromAnnotations).trim()) ||
+                parsed.github ||
+                '';
+              const mergedForCount = { ...parsed, linkedIn, github };
+              setData({
+                ...emptyResume,
+                fullName: parsed.fullName || '',
+                email: parsed.email || '',
+                phone: parsed.phone || '',
+                linkedIn,
+                github,
+                location: parsed.location || '',
+                website: parsed.website || '',
+                summary: parsed.summary || '',
+                skills: parsed.skills || '',
+                experience: (parsed.experience || []).map((row) => ({
+                  id: newId(),
+                  title: row.title || '',
+                  company: row.company || '',
+                  period: row.period || '',
+                  location: row.location || '',
+                  details: row.details || '',
+                })),
+                education: (parsed.education || []).map((row) => ({
+                  id: newId(),
+                  school: row.school || '',
+                  degree: row.degree || '',
+                  period: row.period || '',
+                  location: row.location || '',
+                  details: row.details || '',
+                })),
+                volunteerExperience: (parsed.volunteerExperience || []).map((row) => ({
+                  id: newId(),
+                  title: row.title || '',
+                  organization: row.organization || '',
+                  period: row.period || '',
+                  location: row.location || '',
+                  details: row.details || '',
+                })),
+                projects: (parsed.projects || []).map((row) => ({
+                  id: newId(),
+                  name: row.name || '',
+                  tech: row.tech || '',
+                  period: row.period || '',
+                  details: row.details || '',
+                })),
+              });
+              const filled = countPdfImportFields(mergedForCount);
+              setImportStatus(
+                filled > 0
+                  ? `Loaded ${filled} field${filled === 1 ? '' : 's'} from PDF — review below`
+                  : 'No text found in PDF (try a text-based PDF, not a scan)',
+              );
+            } catch (e) {
+              console.error(e);
+              setPdfRawText('');
+              const msg =
+                e instanceof Error && e.message.includes('timed out')
+                  ? 'PDF timed out — check network or try a smaller file'
+                  : 'PDF import failed — edit fields manually';
+              setImportStatus(msg);
+            }
+          })();
+        }
+      }
+    },
+    [],
+  );
+
+  const onInputChange = useCallback(
+    (e) => {
+      pickFiles(e.target.files);
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    },
+    [pickFiles],
+  );
+
+  const onDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      setDragOver(false);
+      pickFiles(e.dataTransfer.files);
+    },
+    [pickFiles],
+  );
+
+  const onDragOver = useCallback((e) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => {
+    setDragOver(false);
+  }, []);
+
   const downloadPdf = useCallback(async () => {
     if (pdfLockRef.current) return;
     pdfLockRef.current = true;
@@ -908,9 +1085,13 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
           ) : null}
         </div>
         <div className="karon-toolbar__actions">
-          <Link className="karon-btn karon-btn--ghost" to={middlewarePath}>
+          <button
+            type="button"
+            className="karon-btn karon-btn--ghost"
+            onClick={() => setShowUploadModal(true)}
+          >
             Upload
-          </Link>
+          </button>
           <Link className="karon-btn karon-btn--ghost" to="/templates">
             Home
           </Link>
@@ -1272,6 +1453,53 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
               </div>
             ) : null}
 
+            {data.education.some((e) => e.school || e.degree) ? (
+              <div className="karon-preview-block">
+                <div className="karon-preview-block__heading">
+                  <EducationSectionIcon className="karon-preview-heading-icon" />
+                  <h2>Education</h2>
+                </div>
+                {data.education.map((row) =>
+                  row.school || row.degree ? (
+                    <div key={row.id} className="karon-preview-item">
+                      <div className="karon-preview-item__top">
+                        <span className="karon-preview-item__title">
+                          {[row.school, row.degree].filter(Boolean).join(' — ') || 'Education'}
+                        </span>
+                        {row.period ? (
+                          <span className="karon-preview-item__meta">{row.period}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            ) : null}
+
+            {KARON_FIXED_CERTIFICATES.length ? (
+              <div className="karon-preview-block">
+                <div className="karon-preview-block__heading">
+                  <CertificationsSectionIcon className="karon-preview-heading-icon" />
+                  <h2>Certifications</h2>
+                </div>
+                {KARON_FIXED_CERTIFICATES.map((cert) => (
+                  <div key={cert.url} className="karon-preview-item">
+                    <p className="karon-preview-summary karon-preview-cert-line">
+                      <span className="karon-preview-cert-line__label">{cert.title}:</span>
+                      <a
+                        className="karon-preview-contact__link karon-preview-cert-line__link"
+                        href={pdfAbsLinkUrl(cert.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {cert.url}
+                      </a>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
             {data.experience.some((e) => e.title || e.company || e.details) ? (
               <div className="karon-preview-block">
                 <div className="karon-preview-block__heading">
@@ -1324,39 +1552,6 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
               </div>
             ) : null}
 
-            {data.education.some((e) => e.school || e.degree) ? (
-              <div className="karon-preview-block">
-                <div className="karon-preview-block__heading">
-                  <EducationSectionIcon className="karon-preview-heading-icon" />
-                  <h2>Education</h2>
-                </div>
-                {data.education.map((row) =>
-                  row.school || row.degree ? (
-                    <div key={row.id} className="karon-preview-item">
-                      <div className="karon-preview-item__top">
-                        <span className="karon-preview-item__title">
-                          {[row.school, row.degree].filter(Boolean).join(' — ') || 'Education'}
-                        </span>
-                        {row.period ? (
-                          <span className="karon-preview-item__meta">{row.period}</span>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null,
-                )}
-              </div>
-            ) : null}
-
-            {data.certifications?.trim() ? (
-              <div className="karon-preview-block">
-                <div className="karon-preview-block__heading">
-                  <CertificationsSectionIcon className="karon-preview-heading-icon" />
-                  <h2>Certifications</h2>
-                </div>
-                <p className="karon-preview-certifications">{data.certifications}</p>
-              </div>
-            ) : null}
-
             {data.skills?.trim() ? (
               <div className="karon-preview-block">
                 <div className="karon-preview-block__heading">
@@ -1369,6 +1564,101 @@ function KaronTemplate({ brandName = 'Karon', middlewarePath = '/karon' } = {}) 
           </article>
         </div>
       </div>
+
+      {showUploadModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '32px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>Upload Resume</h2>
+            <div
+              className={`karon-mw__drop${dragOver ? ' karon-mw__drop--active' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              style={{ marginBottom: '20px', textAlign: 'center' }}
+            >
+              <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPT}
+                hidden
+                onChange={onInputChange}
+              />
+              <svg
+                className="karon-mw__drop-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <p className="karon-mw__drop-title">Upload your resume</p>
+              <p className="karon-mw__drop-hint">Drag and drop a file here, or choose from your device</p>
+              <button
+                type="button"
+                className="karon-mw__btn-upload"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  inputRef.current?.click();
+                }}
+              >
+                Choose file
+              </button>
+              <p className="karon-mw__file-types">PDF, DOC, or DOCX · Max size depends on your browser</p>
+            </div>
+            <button
+              type="button"
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+              }}
+              onClick={() => setShowUploadModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

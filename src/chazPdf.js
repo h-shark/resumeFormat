@@ -81,6 +81,7 @@ export async function buildChazResumePdf(resume) {
   const asideW = contentW - mainW - colGap;
   const mainX = margin;
   const asideX = mainX + mainW + colGap;
+  const dividerX = mainX + mainW + colGap / 2;
   const mainWrapW = Math.max(20, mainW - CHAZ_MAIN_WRAP_SAFETY_MM);
   const asideWrapW = Math.max(18, asideW - CHAZ_ASIDE_WRAP_SAFETY_MM);
 
@@ -101,6 +102,9 @@ export async function buildChazResumePdf(resume) {
   function newPage() {
     pdf.addPage();
     drawPdfPageBackground();
+    pdf.setDrawColor(CHAZ_LINE[0], CHAZ_LINE[1], CHAZ_LINE[2]);
+    pdf.setLineWidth(0.2);
+    pdf.line(dividerX, marginTop, dividerX, bottomY);
     yM = marginTop;
     yA = marginTop;
   }
@@ -206,6 +210,9 @@ export async function buildChazResumePdf(resume) {
   pdf.line(margin, yM, pageW - margin, yM);
   yM += 5;
   yA = yM;
+  pdf.setDrawColor(CHAZ_LINE[0], CHAZ_LINE[1], CHAZ_LINE[2]);
+  pdf.setLineWidth(0.2);
+  pdf.line(dividerX, yM - 1.2, dividerX, bottomY);
 
   const fsBody = 8;
   const fsSmall = 7.5;
@@ -237,22 +244,32 @@ export async function buildChazResumePdf(resume) {
   if (skillItems.length) {
     const h = sectionTitleGreen('Skills', asideX, yA, asideWrapW);
     yA += h;
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(fsSmall);
-    pdf.setTextColor(CHAZ_MUTED[0], CHAZ_MUTED[1], CHAZ_MUTED[2]);
-    const skBulletPrefix = '•  ';
-    const skBulletW = pdf.getTextWidth(skBulletPrefix);
+    const skillRowPadX = 1.8;
+    const skillRowPadY = 1.1;
+    const skillDot = 0.9;
+    const skillTextX = asideX + skillRowPadX + skillDot + 1.2;
+    const skillTextW = Math.max(8, asideWrapW - (skillTextX - asideX) - skillRowPadX);
     for (const sk of skillItems) {
-      const skTextMax = Math.max(8, asideWrapW - skBulletW - 1);
-      const wrapped = pdf.splitTextToSize(pdfSafeText(sk) || '', skTextMax);
-      const skTextX = asideX + skBulletW;
-      for (let si = 0; si < wrapped.length; si++) {
-        ensureAside(lhSkillWrap);
-        if (si === 0) pdf.text(skBulletPrefix + wrapped[si], asideX, yA, { baseline: 'top' });
-        else pdf.text(wrapped[si], skTextX, yA, { baseline: 'top' });
-        yA += lhSkillWrap;
+      const wrapped = pdf.splitTextToSize(pdfSafeText(sk) || '', skillTextW);
+      const rowH = skillRowPadY * 2 + wrapped.length * lhSkillWrap;
+      ensureAside(rowH + 0.5);
+      pdf.setDrawColor(223, 243, 232);
+      pdf.setFillColor(246, 252, 248);
+      pdf.setLineWidth(0.18);
+      pdf.roundedRect(asideX, yA, asideWrapW, rowH, 1.6, 1.6, 'FD');
+
+      pdf.setFillColor(CHAZ_GREEN[0], CHAZ_GREEN[1], CHAZ_GREEN[2]);
+      pdf.circle(asideX + skillRowPadX + skillDot / 2, yA + skillRowPadY + lhSkillWrap * 0.52, skillDot / 2, 'F');
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(fsSmall);
+      pdf.setTextColor(63, 74, 68);
+      let ySkillLine = yA + skillRowPadY;
+      for (const line of wrapped) {
+        pdf.text(line, skillTextX, ySkillLine, { baseline: 'top' });
+        ySkillLine += lhSkillWrap;
       }
-      yA += 0.35;
+      yA += rowH + 0.65;
     }
     yA += 2;
   }
@@ -442,8 +459,6 @@ export async function buildChazResumePdf(resume) {
     String(resume.fullName || 'resume')
       .replace(/[^\w\s-]/g, '')
       .trim()
-      .replace(/\s+/g, ' ') || 'resume';
-  const d = new Date();
-  const ts = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`;
-  pdf.save(`${fileStem}-${ts}.pdf`);
+      .replace(/\s+/g, '_') || 'resume';
+  pdf.save(`${fileStem}.pdf`);
 }

@@ -383,6 +383,21 @@
   word-break: break-word;
 }
 
+.karon-page .karon-preview-cert-line {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  column-gap: 0.35rem;
+}
+
+.karon-page .karon-preview-cert-line__label {
+  font-weight: 400;
+  color: #374151;
+}
+
+.karon-page .karon-preview-cert-line__link {
+  justify-self: start;
+}
+
 .karon-page .karon-preview-item {
   margin-bottom: 0.65rem;
 }

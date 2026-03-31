@@ -93,6 +93,15 @@ const defaultLandryResume = {
   projects: [],
 };
 
+const landryCertificates = [
+  { name: 'Go', url: 'https://www.hackerrank.com/certificates/574a75231aad' },
+  { name: 'React', url: 'https://www.hackerrank.com/certificates/97e6358fc255' },
+  { name: 'Python', url: 'https://www.hackerrank.com/certificates/ace3934433ad' },
+  { name: 'Rest', url: 'https://www.hackerrank.com/certificates/ce02365a3488' },
+];
+const LANDRY_SKILLS_FALLBACK =
+  'Backend: Golang, Python, Node, SQL, NoSQL\nFrontend: React, TypeScript, Angular, Tailwind CSS, Accessibility\nAI: Prompt engineering, RAG basics, OpenAI API integration\nCloud development: AWS (EC2/S3), Docker, CI/CD pipelines';
+
 function countPdfImportFields(parsed) {
   let n = 0;
   if (parsed.fullName) n += 1;
@@ -113,6 +122,27 @@ function bulletsFromDetails(details) {  return String(details || '')
     .split(/\n+/)
     .map((line) => line.replace(/^\s*[•\-*]\s*/, '').trim())
     .filter(Boolean);
+}
+
+function buildLandrySkillMatrixRows(text) {
+  return parseLandrySkillRows(text).flatMap((row, idx) => {
+    const skills = String(row.skillsText || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!skills.length) return [];
+    return [{ key: `landry-skill-group-${idx}`, category: row.category || '', skills }];
+  });
+}
+
+function splitSkillMatrixColumns(groups) {
+  const left = [];
+  const right = [];
+  groups.forEach((g, i) => {
+    if (i % 2 === 0) left.push(g);
+    else right.push(g);
+  });
+  return [left, right];
 }
 
 /** Renders experience/project details: bullets + embedded job lines as sub-headers (not bullets). */
@@ -190,7 +220,10 @@ export default function LandryTemplate({ brandName = 'Landry', middlewarePath = 
   const [pdfRawText, setPdfRawText] = useState(() => (isPdfUpload ? undefined : null));
   const [pdfBusy, setPdfBusy] = useState(false);
   const [importStatus, setImportStatus] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const previewRef = useRef(null);
+  const inputRef = useRef(null);
   const pdfLockRef = useRef(false);
   const pdfImportDoneRef = useRef(false);
 
@@ -380,6 +413,130 @@ export default function LandryTemplate({ brandName = 'Landry', middlewarePath = 
     }));
   }, []);
 
+
+
+  const ACCEPT =
+    '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  const pickFiles = useCallback(
+    (files) => {
+      const next = files && files[0];
+      if (next) {
+        setShowUploadModal(false);
+        setDragOver(false);
+        // Process the file
+        const isPdf = next.type === 'application/pdf' || next.name?.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          pdfImportDoneRef.current = false;
+          setImportStatus('Reading PDF…');
+          (async () => {
+            try {
+              const buf = await next.arrayBuffer();
+              const extracted = await extractTextAndAnnotationLinksFromPdf(buf);
+              const text = extracted?.text ?? '';
+              setPdfRawText(text);
+              const parsed = parseResumeFromPdfText(text);
+              const linkedIn =
+                (extracted?.linkedInFromAnnotations && String(extracted.linkedInFromAnnotations).trim()) ||
+                parsed.linkedIn ||
+                '';
+              const github =
+                (extracted?.githubFromAnnotations && String(extracted.githubFromAnnotations).trim()) ||
+                parsed.github ||
+                '';
+              setData({
+                ...landryEmptyResume,
+                fullName: parsed.fullName || '',
+                headline: '',
+                email: parsed.email || '',
+                phone: parsed.phone || '',
+                linkedIn,
+                github,
+                location: parsed.location || '',
+                summary: parsed.summary || '',
+                skills: parsed.skills || '',
+                experience: (parsed.experience || []).map((row) => ({
+                  id: newId(),
+                  title: row.title || '',
+                  company: row.company || '',
+                  period: row.period || '',
+                  location: row.location || '',
+                  details: row.details || '',
+                })),
+                education: (parsed.education || []).map((row) => ({
+                  id: newId(),
+                  school: row.school || '',
+                  degree: row.degree || '',
+                  period: row.period || '',
+                  location: row.location || '',
+                  details: row.details || '',
+                })),
+                volunteerExperience: (parsed.volunteerExperience || []).map((row) => ({
+                  id: newId(),
+                  title: row.title || '',
+                  organization: row.organization || '',
+                  period: row.period || '',
+                  location: row.location || '',
+                  details: row.details || '',
+                })),
+                projects: (parsed.projects || []).map((row) => ({
+                  id: newId(),
+                  name: row.name || '',
+                  tech: row.tech || '',
+                  period: row.period || '',
+                  details: row.details || '',
+                })),
+              });
+              const filled = countPdfImportFields({ ...parsed, linkedIn, github });
+              setImportStatus(
+                filled > 0
+                  ? `Loaded ${filled} field${filled === 1 ? '' : 's'} from PDF — review below`
+                  : 'No text found in PDF (try a text-based PDF, not a scan)',
+              );
+            } catch (e) {
+              console.error(e);
+              setPdfRawText('');
+              const msg =
+                e instanceof Error && e.message.includes('timed out')
+                  ? 'PDF timed out — check network or try a smaller file'
+                  : 'PDF import failed — edit fields manually';
+              setImportStatus(msg);
+            }
+          })();
+        }
+      }
+    },
+    [],
+  );
+
+  const onInputChange = useCallback(
+    (e) => {
+      pickFiles(e.target.files);
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    },
+    [pickFiles],
+  );
+
+  const onDrop = useCallback(
+    (e) => {
+      e.preventDefault();
+      setDragOver(false);
+      pickFiles(e.dataTransfer.files);
+    },
+    [pickFiles],
+  );
+
+  const onDragOver = useCallback((e) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => {
+    setDragOver(false);
+  }, []);
+
   const downloadPdf = useCallback(async () => {
     if (pdfLockRef.current) return;
     pdfLockRef.current = true;
@@ -412,9 +569,13 @@ export default function LandryTemplate({ brandName = 'Landry', middlewarePath = 
           ) : null}
         </div>
         <div className="karon-toolbar__actions">
-          <Link className="karon-btn karon-btn--ghost" to={middlewarePath}>
+          <button
+            type="button"
+            className="karon-btn karon-btn--ghost"
+            onClick={() => setShowUploadModal(true)}
+          >
             Upload
-          </Link>
+          </button>
           <Link className="karon-btn karon-btn--ghost" to="/templates">
             Home
           </Link>
@@ -862,6 +1023,29 @@ export default function LandryTemplate({ brandName = 'Landry', middlewarePath = 
               </section>
             ) : null}
 
+            <section className="landry-sec">
+              <h2 className="landry-sec-title">Certificates</h2>
+              <div className="landry-timeline">
+                <LandryTimelineRow dates="" location="">
+                  <div className="landry-cert-list">
+                    {landryCertificates.map((cert) => (
+                      <div key={cert.url} className="landry-cert-line">
+                        <span className="landry-cert-name">{cert.name}:</span>
+                        <a
+                          href={pdfAbsLinkUrl(cert.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#0066cc', textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {cert.url}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </LandryTimelineRow>
+              </div>
+            </section>
+
             {data.experience.some((e) => e.title || e.company || e.details) ? (
               <section className="landry-sec">
                 <h2 className="landry-sec-title">Experience</h2>
@@ -908,28 +1092,41 @@ export default function LandryTemplate({ brandName = 'Landry', middlewarePath = 
               </section>
             ) : null}
 
-            {data.skills?.trim() ? (
-              <section className="landry-sec landry-sec--skills">
-                <h2 className="landry-sec-title">Skills</h2>
-                <hr className="landry-sec-rule" />
-                <div className="landry-skills-table">
-                  {parseLandrySkillRows(data.skills).map((row, i) => (
-                    <div
-                      key={i}
-                      className={
-                        row.category?.trim()
-                          ? 'landry-skills-row'
-                          : 'landry-skills-row landry-skills-row--plain'
-                      }
-                    >
-                      <div className="landry-skills-cat">{row.category}</div>
-                      <div className="landry-skills-divider" aria-hidden="true" />
-                      <div className="landry-skills-values">{row.skillsText}</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            <section className="landry-sec landry-sec--skills">
+              <h2 className="landry-sec-title">Skills</h2>
+              <hr className="landry-sec-rule" />
+              {(() => {
+                const groups = buildLandrySkillMatrixRows(
+                  parseLandrySkillRows(data.skills).length ? data.skills : LANDRY_SKILLS_FALLBACK,
+                );
+                const [leftCol, rightCol] = splitSkillMatrixColumns(groups);
+                return (
+                  <div className="landry-skill-matrix landry-skill-matrix--two-cols">
+                    {[leftCol, rightCol].map((col, idx) => (
+                      <div key={idx} className="landry-skill-matrix__col">
+                        {col.map((group) => (
+                          <div key={group.key} className="landry-skill-matrix__group">
+                            {group.category?.trim() ? (
+                              <div className="landry-skill-matrix__category">{group.category}</div>
+                            ) : null}
+                            {group.skills.map((skill) => (
+                              <div key={`${group.key}-${skill}`} className="landry-skill-matrix__row">
+                                <div className="landry-skill-matrix__name">{skill}</div>
+                                <div className="landry-skill-matrix__dots" aria-label="5 out of 5">
+                                  {[1, 2, 3, 4, 5].map((n) => (
+                                    <span key={n} className="landry-skill-matrix__dot landry-skill-matrix__dot--on" />
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </section>
 
             {data.references?.trim() ? (
               <section className="landry-sec">
@@ -958,6 +1155,101 @@ export default function LandryTemplate({ brandName = 'Landry', middlewarePath = 
           </article>
         </div>
       </div>
+
+      {showUploadModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '32px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>Upload Resume</h2>
+            <div
+              className={`karon-mw__drop${dragOver ? ' karon-mw__drop--active' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              style={{ marginBottom: '20px', textAlign: 'center' }}
+            >
+              <input
+                ref={inputRef}
+                type="file"
+                accept={ACCEPT}
+                hidden
+                onChange={onInputChange}
+              />
+              <svg
+                className="karon-mw__drop-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <p className="karon-mw__drop-title">Upload your resume</p>
+              <p className="karon-mw__drop-hint">Drag and drop a file here, or choose from your device</p>
+              <button
+                type="button"
+                className="karon-mw__btn-upload"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  inputRef.current?.click();
+                }}
+              >
+                Choose file
+              </button>
+              <p className="karon-mw__file-types">PDF, DOC, or DOCX · Max size depends on your browser</p>
+            </div>
+            <button
+              type="button"
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+              }}
+              onClick={() => setShowUploadModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

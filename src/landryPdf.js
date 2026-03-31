@@ -8,6 +8,14 @@ const GREY = [117, 117, 117]; /* #757575 */
 const LINK_BLUE = [59, 130, 246];
 const INK = [17, 24, 39];
 const LINE = [209, 213, 219];
+const LANDRY_CERTIFICATES = [
+  { name: 'Go', url: 'https://www.hackerrank.com/certificates/574a75231aad' },
+  { name: 'React', url: 'https://www.hackerrank.com/certificates/97e6358fc255' },
+  { name: 'Python', url: 'https://www.hackerrank.com/certificates/ace3934433ad' },
+  { name: 'Rest', url: 'https://www.hackerrank.com/certificates/ce02365a3488' },
+];
+const LANDRY_SKILLS_FALLBACK =
+  'Backend: Golang, Python, Node, SQL, NoSQL\nFrontend: React, TypeScript, Angular, Tailwind CSS, Accessibility\nAI: Prompt engineering, RAG basics, OpenAI API integration\nCloud development: AWS (EC2/S3), Docker, CI/CD pipelines';
 
 function ptToMm(pt) {
   return (pt * 25.4) / 72;
@@ -59,6 +67,27 @@ function bulletsFromDetails(details) {
     .filter(Boolean);
 }
 
+function buildLandrySkillMatrixRows(text) {
+  return parseLandrySkillRows(text).flatMap((row) => {
+    const skills = String(row.skillsText || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!skills.length) return [];
+    return [{ category: row.category || '', skills }];
+  });
+}
+
+function splitSkillMatrixColumns(groups) {
+  const left = [];
+  const right = [];
+  groups.forEach((g, i) => {
+    if (i % 2 === 0) left.push(g);
+    else right.push(g);
+  });
+  return [left, right];
+}
+
 /**
  * Enhancv-style Landry: centered header, horizontal contact, timeline sections.
  * Draws optional full-bleed corner decoration from `/landry-pdf-bg.png` (see `public/`).
@@ -95,16 +124,16 @@ export async function buildLandryResumePdf(resume) {
     tlBlockBase: 0.2,
     tlEnsureSlack: 1.05,
     tlEnsureBlockSlack: 1.05,
-    tlDateLh: 1.04,
-    tlLocLh: 0.98,
-    tlRoleLh: 0.98,
-    tlOrgLh: 0.98,
+    tlDateLh: 1.1,
+    tlLocLh: 1.06,
+    tlRoleLh: 1.06,
+    tlOrgLh: 1.06,
     /** Wrapped bullet lines (within one bullet + between bullets) */
-    tlBulletLh: 0.99,
-    tlEmb8Lh: 0.98,
-    tlEmb75Lh: 1.0,
+    tlBulletLh: 1.12,
+    tlEmb8Lh: 1.08,
+    tlEmb75Lh: 1.1,
     tlSegHeaderGap: 0.2,
-    tlRowGap: 0.75,
+    tlRowGap: 1.05,
     tlStemExtra: 0.25,
     /** Extra inset between company row and first detail bullet (mm); 0 = flush */
     tlAfterOrgToBullets: 0,
@@ -141,7 +170,7 @@ export async function buildLandryResumePdf(resume) {
     pdf.setFontSize(8.5);
     pdf.setTextColor(INK[0], INK[1], INK[2]);
     pdf.text(String(label).toUpperCase(), margin, y, { baseline: 'top' });
-    y += ptToMm(8.5) * PDF_TIGHT.secTitleLine;
+    y += ptToMm(8.5) * PDF_TIGHT.secTitleLine + 0.8;
   }
 
   /* —— Header —— (name matches section titles e.g. SUMMARY — INK) */
@@ -256,7 +285,7 @@ export async function buildLandryResumePdf(resume) {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(fs);
     pdf.setTextColor(INK[0], INK[1], INK[2]);
-    const lh = ptToMm(fs) * 1.18;
+    const lh = ptToMm(fs) * 1.28;
     const lines = pdf.splitTextToSize(raw, pageW - 2 * margin);
     for (const ln of lines) {
       ensure(lh);
@@ -603,6 +632,87 @@ export async function buildLandryResumePdf(resume) {
     y += 0.5;
   }
 
+  if (LANDRY_CERTIFICATES.length) {
+    ensure(ptToMm(8.5) * PDF_TIGHT.secTitleLine + 16);
+    sectionTitle('Certificates');
+
+    const certFs = 8;
+    const certLh = ptToMm(certFs) * 1.12;
+    const certGap = 0.2;
+    const certNameColW = 18;
+    const certSectionTop = y;
+    const certDotY = certSectionTop + 1.55;
+    const certStemTop = certSectionTop + 2.85;
+
+    pdf.setFillColor(INK[0], INK[1], INK[2]);
+    pdf.circle(railX, certDotY, 1.05, 'F');
+
+    let yCert = certSectionTop;
+    for (const cert of LANDRY_CERTIFICATES) {
+      const certName = String(pdfSafeText(cert.name) || '').trim();
+      const certUrl = String(pdfSafeText(cert.url) || '').trim();
+      const certAbsUrl = pdfAbsLinkUrl(cert.url);
+      const certLabel = `${certName}:`;
+      const certUrlX = bodyX + certNameColW;
+      const certUrlW = Math.max(10, bodyW - certNameColW);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(certFs);
+      pdf.setTextColor(INK[0], INK[1], INK[2]);
+      ensure(certLh + 1);
+      pdf.text(certLabel, bodyX, yCert, { baseline: 'top' });
+
+      const urlFirstLines = pdf.splitTextToSize(certUrl, certUrlW);
+      const firstLine = urlFirstLines[0] || certUrl;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(certFs);
+      pdf.setTextColor(LINK_BLUE[0], LINK_BLUE[1], LINK_BLUE[2]);
+      pdf.text(firstLine, certUrlX, yCert, { baseline: 'top' });
+      const firstW = pdf.getTextWidth(firstLine);
+      const firstUnderlineY = yCert + ptToMm(certFs) * 0.82;
+      pdf.setDrawColor(LINK_BLUE[0], LINK_BLUE[1], LINK_BLUE[2]);
+      pdf.setLineWidth(0.12);
+      pdf.line(certUrlX, firstUnderlineY, certUrlX + firstW, firstUnderlineY);
+      try {
+        pdf.link(certUrlX, yCert, firstW, certLh, { url: certAbsUrl });
+      } catch {
+        /* ignore invalid links */
+      }
+      yCert += certLh;
+
+      const remaining = certUrl.slice(firstLine.length).trim();
+      if (remaining) {
+        const remLines = pdf.splitTextToSize(remaining, bodyW);
+        for (const remLine of remLines) {
+          ensure(certLh + 1);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(certFs);
+          pdf.setTextColor(LINK_BLUE[0], LINK_BLUE[1], LINK_BLUE[2]);
+          pdf.text(remLine, bodyX, yCert, { baseline: 'top' });
+          const remW = pdf.getTextWidth(remLine);
+          const remUnderlineY = yCert + ptToMm(certFs) * 0.82;
+          pdf.setDrawColor(LINK_BLUE[0], LINK_BLUE[1], LINK_BLUE[2]);
+          pdf.setLineWidth(0.12);
+          pdf.line(bodyX, remUnderlineY, bodyX + remW, remUnderlineY);
+          try {
+            pdf.link(bodyX, yCert, remW, certLh, { url: certAbsUrl });
+          } catch {
+            /* ignore invalid links */
+          }
+          yCert += certLh;
+        }
+      }
+      yCert += certGap;
+    }
+
+    const certStemEnd = Math.max(yCert + 0.1, certStemTop + 1);
+    pdf.setDrawColor(LINE[0], LINE[1], LINE[2]);
+    pdf.setLineWidth(0.25);
+    pdf.line(railX, certStemTop, railX, certStemEnd);
+    y = yCert + 0.5;
+  }
+
   const expOpts = {
     titleKey: 'title',
     orgKey: 'company',
@@ -637,74 +747,55 @@ export async function buildLandryResumePdf(resume) {
     y += 0.5;
   }
 
-  const skillRows = parseLandrySkillRows(resume.skills || '');
+  const skillRows = buildLandrySkillMatrixRows(
+    parseLandrySkillRows(resume.skills || '').length ? resume.skills || '' : LANDRY_SKILLS_FALLBACK,
+  );
   if (skillRows.length) {
     sectionTitle('Skills');
-    pdf.setDrawColor(LINE[0], LINE[1], LINE[2]);
-    pdf.setLineWidth(0.2);
-    pdf.line(margin, y, pageW - margin, y);
-    y += 1.4;
-
-    const catColW = Math.min(52, (pageW - 2 * margin) * 0.34);
-    const dividerX = margin + catColW;
-    const skillsX = dividerX + 2;
-    const skillsW = pageW - margin - skillsX;
-    const fs = 8;
-    const lh = ptToMm(fs) * 1.14;
-    let railY0 = null;
-    let railY1 = null;
-
-    for (const row of skillRows) {
-      const hasCat = String(row.category || '').trim().length > 0;
-      const cat = String(pdfSafeText(row.category) || '').trim();
-      const val = String(pdfSafeText(row.skillsText) || '').trim();
-      if (!hasCat) {
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(fs);
-        pdf.setTextColor(INK[0], INK[1], INK[2]);
-        for (const ln of pdf.splitTextToSize(val || '', pageW - 2 * margin)) {
-          ensure(lh);
-          pdf.text(ln, margin, y, { baseline: 'top' });
-          y += lh;
+    const catLh = ptToMm(7) * 1.12;
+    const rowLh = ptToMm(8) * 1.34;
+    const colGap = 8;
+    const colW = (pageW - 2 * margin - colGap) / 2;
+    const leftX = margin;
+    const rightX = margin + colW + colGap;
+    const dotGap = 2.2;
+    const dotR = 0.75;
+    const [leftCol, rightCol] = splitSkillMatrixColumns(skillRows);
+    let yLeft = y;
+    let yRight = y;
+    const renderCol = (groups, x, yStart) => {
+      let yy = yStart;
+      for (const group of groups) {
+        if (group.category?.trim()) {
+          ensure(yy - y + catLh + 1);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(7);
+          pdf.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+          pdf.text(String(pdfSafeText(group.category)).toUpperCase(), x, yy, { baseline: 'top' });
+          yy += catLh;
         }
-        y += 0.45;
-        continue;
+        for (const skill of group.skills) {
+          ensure(yy - y + rowLh + 1);
+          const dotsStartX = x + colW - 12;
+          const nameW = Math.max(18, dotsStartX - x - 3);
+          const shown = (pdf.splitTextToSize(String(pdfSafeText(skill) || ''), nameW) || [skill])[0];
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(INK[0], INK[1], INK[2]);
+          pdf.text(shown, x, yy, { baseline: 'top' });
+          for (let i = 0; i < 5; i++) {
+            pdf.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
+            pdf.circle(dotsStartX + i * dotGap, yy + rowLh * 0.45, dotR, 'F');
+          }
+          yy += rowLh;
+        }
+        yy += 0.6;
       }
-
-      const rowTop = y;
-      const catLines = pdf.splitTextToSize(cat, catColW - 0.5);
-      const valLines = pdf.splitTextToSize(val, skillsW);
-      const n = Math.max(catLines.length, valLines.length);
-      const rowH = n * lh + 0.8;
-      ensure(rowH);
-
-      let yCat = y;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(fs);
-      pdf.setTextColor(INK[0], INK[1], INK[2]);
-      for (const cl of catLines) {
-        pdf.text(cl, margin, yCat, { baseline: 'top' });
-        yCat += lh;
-      }
-
-      let yVal = y;
-      pdf.setFont('helvetica', 'normal');
-      for (const vl of valLines) {
-        pdf.text(vl, skillsX, yVal, { baseline: 'top' });
-        yVal += lh;
-      }
-
-      const rowBottom = Math.max(yCat, yVal);
-      if (railY0 == null) railY0 = rowTop;
-      railY1 = rowBottom;
-      y = rowBottom + 0.45;
-    }
-
-    if (railY0 != null && railY1 != null) {
-      pdf.setDrawColor(LINE[0], LINE[1], LINE[2]);
-      pdf.setLineWidth(0.2);
-      pdf.line(dividerX, railY0, dividerX, railY1);
-    }
+      return yy;
+    };
+    yLeft = renderCol(leftCol, leftX, yLeft);
+    yRight = renderCol(rightCol, rightX, yRight);
+    y = Math.max(yLeft, yRight);
   }
 
   if (resume.references?.trim()) {
@@ -733,8 +824,6 @@ export async function buildLandryResumePdf(resume) {
     String(resume.fullName || 'resume')
       .replace(/[^\w\s-]/g, '')
       .trim()
-      .replace(/\s+/g, ' ') || 'resume';
-  const d = new Date();
-  const ts = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`;
-  pdf.save(`${fileStem}-${ts}.pdf`);
+      .replace(/\s+/g, '_') || 'resume';
+  pdf.save(`${fileStem}.pdf`);
 }
