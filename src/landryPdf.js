@@ -751,6 +751,19 @@ export async function buildLandryResumePdf(resume) {
     parseLandrySkillRows(resume.skills || '').length ? resume.skills || '' : LANDRY_SKILLS_FALLBACK,
   );
   if (skillRows.length) {
+    const estimateSkillColumnHeight = (groups, catLh, rowLh) => {
+      let h = 0;
+      for (const g of groups) {
+        const hasCategory = Boolean(g.category?.trim());
+        h += groupPadY * 2;
+        if (hasCategory) h += categoryChipH + categoryToRowsGap;
+        h += g.skills.length * rowLh;
+        h += Math.max(0, g.skills.length - 1) * 0.1;
+        h += groupGapY;
+      }
+      return h;
+    };
+
     sectionTitle('Skills');
     const catLh = ptToMm(7) * 1.12;
     const rowLh = ptToMm(8) * 1.34;
@@ -760,36 +773,69 @@ export async function buildLandryResumePdf(resume) {
     const rightX = margin + colW + colGap;
     const dotGap = 2.2;
     const dotR = 0.75;
+    const groupPadX = 1.7;
+    const groupPadY = 1.4;
+    const groupGapY = 1.2;
+    const categoryChipH = 4.1;
+    const categoryChipPadX = 1.4;
+    const categoryToRowsGap = 0.8;
     const [leftCol, rightCol] = splitSkillMatrixColumns(skillRows);
+    const estimatedSkillsHeight = Math.max(
+      estimateSkillColumnHeight(leftCol, catLh, rowLh),
+      estimateSkillColumnHeight(rightCol, catLh, rowLh),
+    );
+    ensure(estimatedSkillsHeight + 2);
     let yLeft = y;
     let yRight = y;
     const renderCol = (groups, x, yStart) => {
       let yy = yStart;
       for (const group of groups) {
+        const hasCategory = Boolean(group.category?.trim());
+        const groupH =
+          groupPadY * 2 +
+          (hasCategory ? categoryChipH + categoryToRowsGap : 0) +
+          group.skills.length * rowLh +
+          Math.max(0, group.skills.length - 1) * 0.1;
+
+        pdf.setDrawColor(222, 237, 226);
+        pdf.setFillColor(247, 252, 248);
+        pdf.setLineWidth(0.2);
+        pdf.roundedRect(x, yy, colW, groupH, 1.4, 1.4, 'FD');
+
+        let gy = yy + groupPadY;
+        const gx = x + groupPadX;
+
         if (group.category?.trim()) {
-          ensure(yy - y + catLh + 1);
+          const chipLabel = String(pdfSafeText(group.category)).toUpperCase();
           pdf.setFont('helvetica', 'bold');
-          pdf.setFontSize(7);
-          pdf.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
-          pdf.text(String(pdfSafeText(group.category)).toUpperCase(), x, yy, { baseline: 'top' });
-          yy += catLh;
+          pdf.setFontSize(6.3);
+          const chipTextW = pdf.getTextWidth(chipLabel);
+          const chipW = chipTextW + categoryChipPadX * 2;
+          pdf.setDrawColor(207, 233, 216);
+          pdf.setFillColor(232, 245, 236);
+          pdf.setLineWidth(0.16);
+          pdf.roundedRect(gx, gy, chipW, categoryChipH, 1.9, 1.9, 'FD');
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(6.3);
+          pdf.setTextColor(47, 106, 70);
+          pdf.text(chipLabel, gx + categoryChipPadX, gy + 1.2, { baseline: 'top' });
+          gy += categoryChipH + categoryToRowsGap;
         }
         for (const skill of group.skills) {
-          ensure(yy - y + rowLh + 1);
-          const dotsStartX = x + colW - 12;
-          const nameW = Math.max(18, dotsStartX - x - 3);
+          const dotsStartX = x + colW - groupPadX - 9.5;
+          const nameW = Math.max(16, dotsStartX - gx - 2.5);
           const shown = (pdf.splitTextToSize(String(pdfSafeText(skill) || ''), nameW) || [skill])[0];
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(8);
-          pdf.setTextColor(INK[0], INK[1], INK[2]);
-          pdf.text(shown, x, yy, { baseline: 'top' });
+          pdf.setTextColor(32, 47, 37);
+          pdf.text(shown, gx, gy, { baseline: 'top' });
           for (let i = 0; i < 5; i++) {
             pdf.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
-            pdf.circle(dotsStartX + i * dotGap, yy + rowLh * 0.45, dotR, 'F');
+            pdf.circle(dotsStartX + i * dotGap, gy + rowLh * 0.45, dotR, 'F');
           }
-          yy += rowLh;
+          gy += rowLh;
         }
-        yy += 0.6;
+        yy += groupH + groupGapY;
       }
       return yy;
     };
